@@ -7,8 +7,8 @@ import { User } from '../types';
 interface HomeProps { user: User; }
 
 // School coordinates for SMPN 1 Padarincang
-const SCHOOL_LAT = -6.207717532534012;
-const SCHOOL_LNG = 105.97297020119038;
+const SCHOOL_LAT = -6.207707501137597;
+const SCHOOL_LNG = 105.97297507951151;
 const ALLOWED_RADIUS_METERS = 50; 
 
 // URL Deployment Google Apps Script
@@ -29,6 +29,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('PAI');
+  const [selectedClass, setSelectedClass] = useState('VII-A');
 
   const [leaveType, setLeaveType] = useState<'Izin' | 'Sakit' | 'Dinas'>('Izin');
   const [leaveStartDate, setLeaveStartDate] = useState('');
@@ -374,7 +375,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     formData.append('subject', selectedSubject);
     formData.append('startTime', startTime);
     formData.append('endTime', endTime);
-    formData.append('className', 'VI - 1'); // Bisa dibuat dinamis nanti
+    formData.append('className', selectedClass); 
     if (photo) formData.append('photo', photo);
 
     submitToSpreadsheet(
@@ -701,28 +702,32 @@ const Home: React.FC<HomeProps> = ({ user }) => {
                           <label className="text-[10px] font-bold text-indigo-400 uppercase mb-2 flex items-center gap-1">
                              <MapPin size={10}/> Ruang / Kelas
                           </label>
-                          <select className="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs">
-                              <option>VI - 1</option>
-                              <option>VI - 2</option>
-                              <option>VI - 3</option>
-                              <option>VI - 4</option>
-                              <option>VI - 5</option>
-                              <option>VI - 6</option>
-                              <option>VI - 7</option>
-                              <option>VII - 1</option>
-                              <option>VII - 2</option>
-                              <option>VII - 3</option>
-                              <option>VII - 4</option>
-                              <option>VII - 5</option>
-                              <option>VII - 6</option>
-                              <option>VII - 7</option>
-                              <option>IX - 1</option>
-                              <option>IX - 2</option>
-                              <option>IX - 3</option>
-                              <option>IX - 4</option>
-                              <option>IX - 5</option>
-                              <option>IX - 6</option>
-                              <option>IX - 7</option>
+                          <select 
+                            value={selectedClass}
+                            onChange={(e) => setSelectedClass(e.target.value)}
+                            className="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500/50 text-xs"
+                          >
+                              <option>VII-A</option>
+                              <option>VII-B</option>
+                              <option>VII-C</option>
+                              <option>VII-D</option>
+                              <option>VII-E</option>
+                              <option>VII-F</option>
+                              <option>VII-G</option>
+                              <option>VIII-A</option>
+                              <option>VIII-B</option>
+                              <option>VIII-C</option>
+                              <option>VIII-D</option>
+                              <option>VIII-E</option>
+                              <option>VIII-F</option>
+                              <option>VIII-G</option>
+                              <option>IX-A</option>
+                              <option>IX-B</option>
+                              <option>IX-C</option>
+                              <option>IX-D</option>
+                              <option>IX-E</option>
+                              <option>IX-F</option>
+                              <option>IX-G</option>
                           </select>
                       </div>
                       <div>

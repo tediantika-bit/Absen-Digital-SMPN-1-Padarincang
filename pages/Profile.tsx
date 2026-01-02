@@ -10,8 +10,9 @@ interface ProfileProps {
   onUserUpdate: (user: User) => void;
 }
 
-const SPREADSHEET_ID = '1MEV7qhqG4SF9eoWyo2KjfSLDndDAqp-MR4iJV5pbg-0';
-const SHEET_NAME = 'Sheet1';
+// Konfigurasi Database (Disamakan dengan Login.tsx)
+const SPREADSHEET_ID = '1mxMVnpeZAxqsFdLeSY733ZnkT-7u23EIhfSdmrmJOb4';
+const SHEET_NAME = 'user';
 
 const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout, onUserUpdate }) => {
   const [user, setUser] = useState<User>(initialUser);
@@ -23,10 +24,20 @@ const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout, onUserUp
     
     try {
       const response = await fetch(url);
+      if (!response.ok) throw new Error("Gagal terhubung ke server.");
+
       const text = await response.text();
-      const startIdx = text.indexOf('{');
-      const endIdx = text.lastIndexOf('}');
-      const jsonData = JSON.parse(text.substring(startIdx, endIdx + 1));
+      
+      // Menggunakan Regex untuk ekstraksi JSON yang lebih aman (seperti di Login.tsx)
+      const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\((.*?)\);/s);
+      
+      if (!jsonMatch || !jsonMatch[1]) {
+        throw new Error("Respon data tidak valid.");
+      }
+
+      const jsonData = JSON.parse(jsonMatch[1]);
+      
+      if (!jsonData.table || !jsonData.table.rows) return;
       
       const rows = jsonData.table.rows;
       const foundRow = rows.find((row: any) => 
@@ -36,6 +47,7 @@ const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout, onUserUp
       if (foundRow) {
         /**
          * Pemetaan kolom Spreadsheet:
+         * c[0]: Username
          * c[2]: Nama Lengkap
          * c[3]: NIP
          * c[4]: Jabatan (Role)
