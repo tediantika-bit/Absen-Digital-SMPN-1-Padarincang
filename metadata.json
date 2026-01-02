@@ -1,0 +1,8 @@
+{
+  "name": "Absen Digital SMPN 1 Padarincang",
+  "description": "A modern mobile-first attendance application for teachers of SMPN 1 Padarincang featuring clock-in/out, teaching logs, and leave requests.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ]
+}
