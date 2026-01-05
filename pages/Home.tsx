@@ -7,8 +7,8 @@ import { User } from '../types';
 interface HomeProps { user: User; }
 
 // School coordinates for SMPN 1 Padarincang
-const SCHOOL_LAT = -6.207707501137597;
-const SCHOOL_LNG = 105.97297507951151;
+const SCHOOL_LAT = -6.114196248039071;
+const SCHOOL_LNG = 106.2276108127061;
 const ALLOWED_RADIUS_METERS = 50; 
 
 // URL Deployment Google Apps Script
@@ -93,11 +93,33 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     setNotification({ message, type });
   };
 
-  const isAfterPulangTime = useMemo(() => {
-    const hours = currentTime.getHours();
-    const minutes = currentTime.getMinutes();
-    return hours > 14 || (hours === 14 && minutes >= 20);
+  // LOGIKA JADWAL PULANG BERDASARKAN HARI
+  const pulangSchedule = useMemo(() => {
+    const day = currentTime.getDay(); // 0 = Minggu, 1 = Senin, ... 6 = Sabtu
+    let hour = 14;
+    let minute = 40;
+
+    // Senin (1), Selasa (2), Rabu (3) => 14:40 (Default)
+    
+    if (day === 4) { // Kamis
+      hour = 14;
+      minute = 5;
+    } else if (day === 5) { // Jumat
+      hour = 10;
+      minute = 55;
+    } 
+    // Sabtu & Minggu (Default ke jadwal biasa atau bisa disesuaikan jika libur)
+
+    const label = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    return { hour, minute, label };
   }, [currentTime]);
+
+  const isAfterPulangTime = useMemo(() => {
+    const currentTotalMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+    const targetTotalMinutes = pulangSchedule.hour * 60 + pulangSchedule.minute;
+    
+    return currentTotalMinutes >= targetTotalMinutes;
+  }, [currentTime, pulangSchedule]);
 
   // Tombol pulang disable jika: Belum absen masuk (status !== PRESENT) ATAU Belum waktunya pulang
   const isPulangDisabled = status !== 'PRESENT' || !isAfterPulangTime;
@@ -538,7 +560,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
             <span className="text-white font-bold text-xs">{status === 'OUT' ? 'Sudah Pulang' : 'Absen Pulang'}</span>
             {status === 'PRESENT' && !isAfterPulangTime && (
               <span className="text-[9px] text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
-                Pukul 14:20
+                Pukul {pulangSchedule.label}
               </span>
             )}
         </button>
