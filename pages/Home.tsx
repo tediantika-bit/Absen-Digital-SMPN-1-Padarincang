@@ -7,8 +7,8 @@ import { User } from '../types';
 interface HomeProps { user: User; }
 
 // School coordinates for SMPN 1 Padarincang
-const SCHOOL_LAT = -6.114196248039071;
-const SCHOOL_LNG = 106.2276108127061;
+const SCHOOL_LAT = -6.207679;
+const SCHOOL_LNG = 105.972942;
 const ALLOWED_RADIUS_METERS = 50; 
 
 // URL Deployment Google Apps Script
