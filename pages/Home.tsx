@@ -16,7 +16,10 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1Gy-QYQMVssA1F888b
 
 const Home: React.FC<HomeProps> = ({ user }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Status: IDLE (Belum absen), PRESENT (Sudah Masuk), OUT (Sudah Pulang/Selesai hari ini)
   const [status, setStatus] = useState<'IDLE' | 'PRESENT' | 'OUT'>('IDLE');
+  
   const [showTeachingModal, setShowTeachingModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
@@ -54,6 +57,28 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     return () => clearInterval(timer);
   }, []);
 
+  // Cek LocalStorage saat load untuk memastikan status hari ini
+  useEffect(() => {
+    const checkTodayStatus = () => {
+      const todayStr = new Date().toLocaleDateString('id-ID'); // Format tanggal lokal sebagai key
+      const keyIn = `absensi_${user.nip}_${todayStr}_IN`;
+      const keyOut = `absensi_${user.nip}_${todayStr}_OUT`;
+
+      const hasClockedIn = localStorage.getItem(keyIn);
+      const hasClockedOut = localStorage.getItem(keyOut);
+
+      if (hasClockedOut) {
+        setStatus('OUT'); // Sudah pulang hari ini
+      } else if (hasClockedIn) {
+        setStatus('PRESENT'); // Sudah masuk, belum pulang
+      } else {
+        setStatus('IDLE'); // Belum absen sama sekali hari ini
+      }
+    };
+
+    checkTodayStatus();
+  }, [user.nip]);
+
   // Auto hide notification
   useEffect(() => {
     if (notification) {
@@ -74,6 +99,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     return hours > 14 || (hours === 14 && minutes >= 20);
   }, [currentTime]);
 
+  // Tombol pulang disable jika: Belum absen masuk (status !== PRESENT) ATAU Belum waktunya pulang
   const isPulangDisabled = status !== 'PRESENT' || !isAfterPulangTime;
 
   // Haversine formula to calculate distance in meters
@@ -343,9 +369,13 @@ const Home: React.FC<HomeProps> = ({ user }) => {
       formData, 
       `Presensi ${typeLabel} Berhasil Dicatat! Data telah tersimpan.`,
       () => {
+        // SIMPAN STATUS KE LOCAL STORAGE AGAR TIDAK BISA ABSEN LAGI HARI INI
+        const todayStr = new Date().toLocaleDateString('id-ID');
         if (attendanceType === 'IN') {
+          localStorage.setItem(`absensi_${user.nip}_${todayStr}_IN`, 'true');
           setStatus('PRESENT');
         } else {
+          localStorage.setItem(`absensi_${user.nip}_${todayStr}_OUT`, 'true');
           setStatus('OUT');
         }
         closeAttendanceModal();
@@ -494,7 +524,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
             <div className="p-3 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-500/20 group-active:scale-95 transition-transform">
                 <LogIn className="text-white" size={24} />
             </div>
-            <span className="text-white font-bold text-xs">Absen Masuk</span>
+            <span className="text-white font-bold text-xs">{status === 'IDLE' ? 'Absen Masuk' : (status === 'PRESENT' ? 'Sudah Masuk' : 'Selesai')}</span>
         </button>
 
         <button 
@@ -505,7 +535,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
             <div className="p-3 bg-indigo-500 rounded-2xl shadow-lg shadow-indigo-500/20 group-active:scale-95 transition-transform">
                 <LogOut className="text-white" size={24} />
             </div>
-            <span className="text-white font-bold text-xs">Absen Pulang</span>
+            <span className="text-white font-bold text-xs">{status === 'OUT' ? 'Sudah Pulang' : 'Absen Pulang'}</span>
             {status === 'PRESENT' && !isAfterPulangTime && (
               <span className="text-[9px] text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
                 Pukul 14:20
