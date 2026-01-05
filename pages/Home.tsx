@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { LogIn, LogOut, Coffee, GraduationCap, MapPin, Clock, Camera, Check, X, RefreshCw, Fingerprint, FileText, Calendar as CalendarIcon, Image as ImageIcon, AlertCircle, ShieldCheck, Navigation } from 'lucide-react';
+import { LogIn, LogOut, Coffee, GraduationCap, MapPin, Clock, Camera, Check, X, RefreshCw, Fingerprint, FileText, Calendar as CalendarIcon, Image as ImageIcon, AlertCircle, ShieldCheck, Navigation, Smartphone } from 'lucide-react';
 import Header from '../components/Header';
 import { User } from '../types';
 
@@ -20,6 +20,10 @@ const Home: React.FC<HomeProps> = ({ user }) => {
   // Status: IDLE (Belum absen), PRESENT (Sudah Masuk), OUT (Sudah Pulang/Selesai hari ini)
   const [status, setStatus] = useState<'IDLE' | 'PRESENT' | 'OUT'>('IDLE');
   
+  // State untuk Device Lock
+  const [isDeviceRestricted, setIsDeviceRestricted] = useState(false);
+  const [deviceOwnerName, setDeviceOwnerName] = useState<string>('');
+
   const [showTeachingModal, setShowTeachingModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
@@ -57,10 +61,25 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Cek LocalStorage saat load untuk memastikan status hari ini
+  // Cek LocalStorage saat load
   useEffect(() => {
     const checkTodayStatus = () => {
-      const todayStr = new Date().toLocaleDateString('id-ID'); // Format tanggal lokal sebagai key
+      const todayStr = new Date().toLocaleDateString('id-ID'); // Key berdasarkan tanggal
+
+      // 1. CEK DEVICE LOCK (Apakah device ini sudah dipakai orang lain hari ini?)
+      const deviceUserNip = localStorage.getItem(`device_owner_nip_${todayStr}`);
+      
+      // Jika ada history NIP di HP ini, DAN NIP-nya BUKAN user yang sedang login sekarang
+      if (deviceUserNip && deviceUserNip !== user.nip) {
+         setIsDeviceRestricted(true);
+         // Kita ambil nama pemilik device (opsional, jika kita simpan namanya juga)
+         const ownerName = localStorage.getItem(`device_owner_name_${todayStr}`);
+         setDeviceOwnerName(ownerName || 'Pengguna Lain');
+      } else {
+         setIsDeviceRestricted(false);
+      }
+
+      // 2. CEK STATUS ABSENSI USER INI
       const keyIn = `absensi_${user.nip}_${todayStr}_IN`;
       const keyOut = `absensi_${user.nip}_${todayStr}_OUT`;
 
@@ -121,8 +140,9 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     return currentTotalMinutes >= targetTotalMinutes;
   }, [currentTime, pulangSchedule]);
 
-  // Tombol pulang disable jika: Belum absen masuk (status !== PRESENT) ATAU Belum waktunya pulang
-  const isPulangDisabled = status !== 'PRESENT' || !isAfterPulangTime;
+  // Tombol pulang disable jika: Belum absen masuk (status !== PRESENT) ATAU Belum waktunya pulang ATAU Device Restricted
+  const isPulangDisabled = status !== 'PRESENT' || !isAfterPulangTime || isDeviceRestricted;
+  const isMasukDisabled = status !== 'IDLE' || isDeviceRestricted;
 
   // Haversine formula to calculate distance in meters
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -391,8 +411,14 @@ const Home: React.FC<HomeProps> = ({ user }) => {
       formData, 
       `Presensi ${typeLabel} Berhasil Dicatat! Data telah tersimpan.`,
       () => {
-        // SIMPAN STATUS KE LOCAL STORAGE AGAR TIDAK BISA ABSEN LAGI HARI INI
         const todayStr = new Date().toLocaleDateString('id-ID');
+        
+        // 1. KUNCI PERANGKAT UNTUK USER INI
+        // Simpan NIP user ini sebagai pemilik device hari ini
+        localStorage.setItem(`device_owner_nip_${todayStr}`, user.nip);
+        localStorage.setItem(`device_owner_name_${todayStr}`, user.name);
+
+        // 2. SIMPAN STATUS ABSENSI USER
         if (attendanceType === 'IN') {
           localStorage.setItem(`absensi_${user.nip}_${todayStr}_IN`, 'true');
           setStatus('PRESENT');
@@ -537,10 +563,26 @@ const Home: React.FC<HomeProps> = ({ user }) => {
         </div>
       </div>
 
+      {isDeviceRestricted && (
+        <div className="px-6 mb-6">
+          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex gap-3 items-start">
+             <div className="p-2 bg-red-500 rounded-lg shrink-0 mt-0.5">
+               <Smartphone size={20} className="text-white"/>
+             </div>
+             <div>
+               <h3 className="text-white text-sm font-bold">Perangkat Terkunci</h3>
+               <p className="text-[11px] text-slate-300 mt-1 leading-snug">
+                 HP ini sudah digunakan oleh <strong>{deviceOwnerName}</strong> hari ini. Satu HP hanya untuk satu guru.
+               </p>
+             </div>
+          </div>
+        </div>
+      )}
+
       <div className="px-6 grid grid-cols-2 gap-4">
         <button 
             onClick={() => openAttendanceModal('IN')}
-            disabled={status !== 'IDLE'}
+            disabled={isMasukDisabled}
             className="flex flex-col items-center justify-center gap-3 p-5 rounded-3xl bg-emerald-600/10 border border-emerald-500/20 hover:bg-emerald-600/20 transition-all disabled:opacity-50 disabled:grayscale group"
         >
             <div className="p-3 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-500/20 group-active:scale-95 transition-transform">
