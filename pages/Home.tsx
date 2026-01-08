@@ -761,18 +761,14 @@ const Home: React.FC<HomeProps> = ({ user }) => {
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="text-[10px] font-bold text-indigo-400 uppercase mb-2 flex items-center gap-1">
-                               <Clock size={10}/> Jam Mulai
+                               <Clock size={10}/> Jam Mulai (Sistem)
                             </label>
                             <input 
                               type="time" 
                               value={startTime}
-                              onChange={(e) => {
-                                setStartTime(e.target.value);
-                                setErrors(prev => ({...prev, startTime: "", endTime: ""}));
-                              }}
-                              className={`w-full p-4 bg-slate-800 border rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500/50 ${errors.startTime ? 'border-red-500' : 'border-slate-700'}`} 
+                              readOnly
+                              className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-slate-400 outline-none cursor-not-allowed" 
                             />
-                            <ErrorMsg name="startTime" />
                         </div>
                         <div>
                             <label className="text-[10px] font-bold text-indigo-400 uppercase mb-2 flex items-center gap-1">
