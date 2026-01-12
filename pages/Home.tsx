@@ -116,16 +116,14 @@ const Home: React.FC<HomeProps> = ({ user }) => {
   const pulangSchedule = useMemo(() => {
     const day = currentTime.getDay(); // 0 = Minggu, 1 = Senin, ... 6 = Sabtu
     let hour = 14;
-    let minute = 40;
+    let minute = 45; // Default: Senin (1), Selasa (2), Rabu (3) => 14:45
 
-    // Senin (1), Selasa (2), Rabu (3) => 14:40 (Default)
-    
-    if (day === 4) { // Kamis
+    if (day === 4) { // Kamis => 14:10
       hour = 14;
-      minute = 5;
-    } else if (day === 5) { // Jumat
-      hour = 10;
-      minute = 55;
+      minute = 10;
+    } else if (day === 5) { // Jumat => 11:00
+      hour = 11;
+      minute = 0;
     } 
     // Sabtu & Minggu (Default ke jadwal biasa atau bisa disesuaikan jika libur)
 
